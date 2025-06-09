@@ -70,6 +70,15 @@ async function uploadImage() {
 }
 
 async function listImages() {
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  if (!sessionData.session) {
+    alert("Not logged in");
+    return;
+  }
+
+  const email = sessionData.session.user.email;
+  const username = email.split("@")[0];
+
   const { data, error } = await supabaseClient.storage.from("images").list();
 
   if (error) {
@@ -81,7 +90,10 @@ async function listImages() {
     const list = document.getElementById("image-list");
     list.innerHTML = "";
 
-    for (const item of data) {
+    // Filter images by current username
+    const userImages = data.filter(item => item.name.startsWith(username + "_"));
+
+    for (const item of userImages) {
       const { data: urlData, error: urlError } = await supabaseClient.storage
         .from("images")
         .createSignedUrl(item.name, 3600);
@@ -102,3 +114,4 @@ async function listImages() {
     }
   }
 }
+
